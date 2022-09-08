@@ -123,7 +123,7 @@ ifeq ($(CONFIG_RISCV_TOOLCHAIN),GNU_RVG)
   ifeq ($(CONFIG_ARCH_RV_ISA_A),y)
     ARCHRVISAA = a
   endif
-  
+
   ifeq ($(CONFIG_ARCH_RV_ISA_C),y)
     ARCHRVISAC = c
   endif
@@ -149,6 +149,12 @@ ifeq ($(CONFIG_RISCV_TOOLCHAIN),GNU_RVG)
   # Construct arch flags
 
   ARCHCPUFLAGS = -march=$(ARCHTYPE)i$(ARCHRVISAM)$(ARCHRVISAA)$(ARCHRVISAF)$(ARCHRVISAD)$(ARCHRVISAC)
+
+  # Newer binutils versions default to ISA spec version 20191213 which moves some
+  # instructions from the I extension to the Zicsr and Zifencei extensions.
+  ifeq ($(call cc-option, -mabi=$(ARCHABITYPE) -march=$(ARCHCPUFLAGS)_zicsr_zifencei),)
+    ARCHCPUFLAGS := $(ARCHCPUFLAGS)_zicsr_zifencei
+  endif
 
   # Construct arch abi flags
 
