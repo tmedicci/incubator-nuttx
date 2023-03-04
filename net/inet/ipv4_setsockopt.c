@@ -287,6 +287,24 @@ int ipv4_setsockopt(FAR struct socket *psock, int option,
         ret = ipt_setsockopt(psock, option, value, value_len);
         break;
 #endif
+      case IP_OPTIONS:
+        {
+          FAR struct socket_conn_s *conn =
+                           (FAR struct socket_conn_s *)psock->s_conn;
+
+          if (value_len >= IPV4_OPTMAX)
+            {
+              nerr("ERROR: invalid length for IP options:%d\n", value_len);
+              ret = -EINVAL;
+            }
+          else
+            {
+              conn->opt.len = value_len;
+              memcpy(conn->opt.data, value, value_len);
+              ret = OK;
+            }
+        }
+        break;
 
       default:
         nerr("ERROR: Unrecognized IPv4 option: %d\n", option);

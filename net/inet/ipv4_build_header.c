@@ -90,7 +90,7 @@ uint16_t ipv4_build_header(FAR struct ipv4_hdr_s *ipv4, uint16_t total_len,
 
   /* if ip has options, build it now */
 
-  if (opt != NULL)
+  if (opt != NULL && opt->len > 0)
     {
       ipv4->vhl += opt->len >> 2;
       memcpy(ipv4 + 1, opt->data, opt->len);

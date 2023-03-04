@@ -112,6 +112,7 @@
 #define IP_TTL                (__SO_PROTOCOL + 14) /* The IP TTL (time to live)
                                                     * of IP packets sent by the
                                                     * network stack */
+#define IP_OPTIONS            (__SO_PROTOCOL + 15) /* The IP per-packet options */
 
 /* SOL_IPV6 protocol-level socket options. */
 

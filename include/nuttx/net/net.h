@@ -39,6 +39,7 @@
 #ifdef CONFIG_MM_IOB
 #  include <nuttx/mm/iob.h>
 #endif
+#include <nuttx/net/ip.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -228,6 +229,10 @@ struct socket_conn_s
 
   uint8_t       s_tos;       /* IPv4 Type of Service */
 #define s_tclass s_tos       /* IPv6 traffic class defination */
+
+  /* Definitions of IPv4 IP Options */
+
+  struct ipv4_opt_s opt;
 
   /* Connection-specific content may follow */
 };
