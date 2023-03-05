@@ -171,16 +171,43 @@ int pipecommon_open(FAR struct file *filep)
     {
       dev->d_nwriters++;
 
-      /* If this is the first writer, then the read semaphore indicates the
-       * number of readers waiting for the first writer.  Wake them all up.
+      /* If this is the first writer, then the n-writers semaphore indicates
+       * the number of readers waiting for the first writer. Wake them all up.
        */
 
       if (dev->d_nwriters == 1)
         {
-          while (nxsem_get_value(&dev->d_rdsem, &sval) == 0 && sval <= 0)
+          while (nxsem_get_value(&dev->d_nwrsem, &sval) == 0 && sval <= 0)
             {
-              nxsem_post(&dev->d_rdsem);
+              nxsem_post(&dev->d_nwrsem);
             }
+        }
+    }
+
+  while ((filep->f_oflags & O_NONBLOCK) == 0 &&    /* Blocking */
+         (filep->f_oflags & O_RDWR) == O_WRONLY && /* Write-only */
+         dev->d_nreaders < 1 &&                    /* No readers on the pipe */
+         dev->d_wrndx == dev->d_rdndx)             /* Buffer is empty */
+    {
+      /* If opened for write-only, then wait for at least one reader
+       * on the pipe.
+       */
+
+      nxmutex_unlock(&dev->d_bflock);
+
+      ret = nxsem_wait(&dev->d_nrdsem);
+      if (ret < 0 || (ret = nxmutex_lock(&dev->d_bflock)) < 0)
+        {
+          /* The nxmutex_lock() call should fail if we are awakened by a
+           * signal or if the task is canceled.
+           */
+
+          ferr("ERROR: nxmutex_lock failed: %d\n", ret);
+
+          /* Immediately close the pipe that we just opened */
+
+          pipecommon_close(filep);
+          return ret;
         }
     }
 
@@ -191,30 +218,32 @@ int pipecommon_open(FAR struct file *filep)
   if ((filep->f_oflags & O_RDOK) != 0)
     {
       dev->d_nreaders++;
+
+      /* If this is the first reader, then the n-readers semaphore indicates
+       * the number of writers waiting for the first reader. Wake them all up.
+       */
+
+      if (dev->d_nreaders == 1)
+        {
+          while (nxsem_get_value(&dev->d_nrdsem, &sval) == 0 && sval <= 0)
+            {
+              nxsem_post(&dev->d_nrdsem);
+            }
+        }
     }
 
-  while ((filep->f_oflags & O_NONBLOCK) == 0 &&    /* Non-blocking */
+  while ((filep->f_oflags & O_NONBLOCK) == 0 &&    /* Blocking */
          (filep->f_oflags & O_RDWR) == O_RDONLY && /* Read-only */
          dev->d_nwriters < 1 &&                    /* No writers on the pipe */
          dev->d_wrndx == dev->d_rdndx)             /* Buffer is empty */
     {
-      /* If opened for read-only, then wait for either (1) at least one
-       * writer on the pipe (policy == 0), or (2) until there is buffered
-       * data to be read (policy == 1).
+      /* If opened for read-only, then wait for either at least one writer
+       * on the pipe.
        */
 
       nxmutex_unlock(&dev->d_bflock);
 
-      /* NOTE: d_rdsem is normally used when the read logic waits for more
-       * data to be written.  But until the first writer has opened the
-       * pipe, the meaning is different: it is used prevent O_RDONLY open
-       * calls from returning until there is at least one writer on the pipe.
-       * This is required both by spec and also because it prevents
-       * subsequent read() calls from returning end-of-file because there is
-       * no writer on the pipe.
-       */
-
-      ret = nxsem_wait(&dev->d_rdsem);
+      ret = nxsem_wait(&dev->d_nwrsem);
       if (ret < 0 || (ret = nxmutex_lock(&dev->d_bflock)) < 0)
         {
           /* The nxmutex_lock() call should fail if we are awakened by a

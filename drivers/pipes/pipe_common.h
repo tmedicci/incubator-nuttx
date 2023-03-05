@@ -117,6 +117,8 @@ struct pipe_dev_s
   mutex_t    d_bflock;      /* Used to serialize access to d_buffer and indices */
   sem_t      d_rdsem;       /* Empty buffer - Reader waits for data write */
   sem_t      d_wrsem;       /* Full buffer - Writer waits for data read */
+  sem_t      d_nrdsem;      /* Waits for readers */
+  sem_t      d_nwrsem;      /* Waits for writers */
   pipe_ndx_t d_wrndx;       /* Index in d_buffer to save next byte written */
   pipe_ndx_t d_rdndx;       /* Index in d_buffer to return the next byte read */
   pipe_ndx_t d_bufsize;     /* allocated size of d_buffer in bytes */
