@@ -2664,8 +2664,6 @@ static int i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
         }
 
       i2sinfo("Queued %d bytes into DMA buffers\n", apb->nbytes);
-      i2s_dump_buffer("Audio pipeline buffer:", &apb->samp[apb->curbyte],
-                      apb->nbytes - apb->curbyte);
 
       nxmutex_unlock(&priv->lock);
 
