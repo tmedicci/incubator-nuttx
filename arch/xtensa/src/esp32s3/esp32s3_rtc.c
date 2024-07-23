@@ -368,7 +368,6 @@ static void IRAM_ATTR esp32s3_rtc_clk_fast_freq_set(
 static uint32_t IRAM_ATTR esp32s3_rtc_clk_cal_internal(
                 enum esp32s3_rtc_cal_sel_e cal_clk,
                 uint32_t slowclk_cycles);
-static int  IRAM_ATTR esp32s3_rtc_clk_slow_freq_get(void);
 static void IRAM_ATTR esp32s3_rtc_clk_slow_freq_set(
                       enum esp32s3_rtc_slow_freq_e slow_freq);
 static void esp32s3_select_rtc_slow_clk(enum esp32s3_slow_clk_sel_e
@@ -1141,7 +1140,21 @@ static void esp32s3_rtc_calibrate_ocode(void)
  * Public Functions
  ****************************************************************************/
 
-static int IRAM_ATTR esp32s3_rtc_clk_slow_freq_get(void)
+/****************************************************************************
+ * Name: esp32s3_rtc_clk_slow_freq_get
+ *
+ * Description:
+ *   This function gets the frequency of the slow clock from the RTC.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   The frequency of the slow clock from the RTC.
+ *
+ ****************************************************************************/
+
+int IRAM_ATTR esp32s3_rtc_clk_slow_freq_get(void)
 {
   return REG_GET_FIELD(RTC_CNTL_RTC_CLK_CONF_REG, RTC_CNTL_ANA_CLK_RTC_SEL);
 }
@@ -1529,6 +1542,9 @@ void IRAM_ATTR esp32s3_rtc_init(void)
     {
       cfg.cali_ocode = 1;
     }
+
+  CLEAR_PERI_REG_MASK(RTC_CNTL_DIG_PWC_REG, RTC_CNTL_WIFI_FORCE_PD);
+  CLEAR_PERI_REG_MASK(RTC_CNTL_DIG_ISO_REG, RTC_CNTL_WIFI_FORCE_ISO);
 
   REGI2C_WRITE_MASK(I2C_DIG_REG, I2C_DIG_REG_XPD_RTC_REG, 0);
   REGI2C_WRITE_MASK(I2C_DIG_REG, I2C_DIG_REG_XPD_DIG_REG, 0);
