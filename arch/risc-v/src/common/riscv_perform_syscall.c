@@ -81,5 +81,10 @@ void *riscv_perform_syscall(uintreg_t *regs)
 
   CURRENT_REGS = NULL;
 
+  if (g_nxmq_do_receive)
+    {
+      asm volatile("nop");
+    }
+
   return regs;
 }

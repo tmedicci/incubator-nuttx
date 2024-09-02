@@ -41,6 +41,9 @@
 #include "sched/sched.h"
 #include "mqueue/mqueue.h"
 
+bool g_nxmq_do_receive = false;
+bool g_nxmq_wait_receive = false;
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -131,6 +134,7 @@ int nxmq_verify_receive(FAR struct file *mq, FAR char *msg, size_t msglen)
  *
  ****************************************************************************/
 
+nooptimiziation_function
 int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
                       int oflags, FAR struct mqueue_msg_s **rcvmsg)
 {
@@ -155,6 +159,8 @@ int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
     }
 #endif
 
+  g_nxmq_wait_receive = true;
+
   /* Get the message from the head of the queue */
 
   while ((newmsg = (FAR struct mqueue_msg_s *)
@@ -166,6 +172,8 @@ int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
 
       if ((oflags & O_NONBLOCK) == 0)
         {
+          g_nxmq_wait_receive = false;
+
           /* Yes.. Block and try again */
 
           rtcb          = this_task();
@@ -199,6 +207,8 @@ int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
             {
               up_switch_context(this_task(), rtcb);
             }
+
+          g_nxmq_wait_receive = true;
 
           /* When we resume at this point, either (1) the message queue
            * is no longer empty, or (2) the wait has been interrupted by
@@ -234,6 +244,7 @@ int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
     }
 
   *rcvmsg = newmsg;
+  g_nxmq_wait_receive = false;
   return OK;
 }
 
@@ -266,12 +277,14 @@ int nxmq_wait_receive(FAR struct mqueue_inode_s *msgq,
  *
  ****************************************************************************/
 
+nooptimiziation_function
 ssize_t nxmq_do_receive(FAR struct mqueue_inode_s *msgq,
                         FAR struct mqueue_msg_s *mqmsg,
                         FAR char *ubuffer, FAR unsigned int *prio)
 {
   FAR struct tcb_s *btcb;
   ssize_t rcvmsglen;
+  g_nxmq_do_receive = true;
 
   /* Get the length of the message (also the return value) */
 
@@ -296,6 +309,8 @@ ssize_t nxmq_do_receive(FAR struct mqueue_inode_s *msgq,
 
   if (msgq->cmn.nwaitnotfull > 0)
     {
+      g_nxmq_do_receive = false;
+
       FAR struct tcb_s *rtcb = this_task();
 
       /* Find the highest priority task that is waiting for
@@ -332,9 +347,12 @@ ssize_t nxmq_do_receive(FAR struct mqueue_inode_s *msgq,
         {
           up_switch_context(btcb, rtcb);
         }
+
+      g_nxmq_do_receive = true;
     }
 
   /* Return the length of the message transferred to the user buffer */
 
+  g_nxmq_do_receive = false;
   return rcvmsglen;
 }

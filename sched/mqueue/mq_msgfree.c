@@ -32,6 +32,8 @@
 
 #include "mqueue/mqueue.h"
 
+bool g_nxmq_free_msg = false;
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -52,8 +54,11 @@
  *
  ****************************************************************************/
 
+nooptimiziation_function
 void nxmq_free_msg(FAR struct mqueue_msg_s *mqmsg)
 {
+  g_nxmq_free_msg = true;
+
   /* If this is a generally available pre-allocated message,
    * then just put it back in the free list.
    */
@@ -93,4 +98,5 @@ void nxmq_free_msg(FAR struct mqueue_msg_s *mqmsg)
     {
       DEBUGPANIC();
     }
+  g_nxmq_free_msg = false;
 }

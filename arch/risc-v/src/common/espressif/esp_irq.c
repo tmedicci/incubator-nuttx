@@ -567,6 +567,11 @@ IRAM_ATTR void *riscv_dispatch_irq(uintreg_t mcause, uintreg_t *regs)
       DEBUGASSERT(CPUINT_ISENABLED(g_cpuint_map[cpuint]));
       DEBUGASSERT(CPUINT_ISASSIGNED(g_cpuint_map[cpuint]));
 
+      if (g_nxmq_wait_receive || g_nxmq_do_receive || g_nxmq_free_msg)
+        {
+          asm volatile("nop");
+        }
+
       irq = g_cpuint_map[cpuint].irq;
 
       is_edge = esprv_intc_int_get_type(cpuint) == INTR_TYPE_EDGE;

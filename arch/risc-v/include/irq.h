@@ -668,6 +668,10 @@ extern "C"
 #define EXTERN extern
 #endif
 
+EXTERN bool g_nxmq_wait_receive;
+EXTERN bool g_nxmq_do_receive;
+EXTERN bool g_nxmq_free_msg;
+
 /* g_current_regs[] holds a references to the current interrupt level
  * register storage structure.  It is non-NULL only during interrupt
  * processing.  Access to g_current_regs[] must be through the macro

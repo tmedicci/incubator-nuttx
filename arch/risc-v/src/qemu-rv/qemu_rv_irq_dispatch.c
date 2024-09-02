@@ -129,6 +129,11 @@ void *riscv_dispatch_irq(uintreg_t vector, uintreg_t *regs)
 {
   int irq = vector & (~RISCV_IRQ_BIT);
 
+  if (g_nxmq_wait_receive || g_nxmq_do_receive || g_nxmq_free_msg)
+    {
+      asm volatile("nop");
+    }
+
   if ((vector & RISCV_IRQ_BIT) != 0)
     {
       regs = riscv_dispatch_async_irq(irq, regs);
